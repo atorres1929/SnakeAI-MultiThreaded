@@ -2,6 +2,7 @@
 #include "util/util.h"
 #include <stdexcept>
 #include <cstdio>
+#include <iostream>
 #include <chrono>
 #include <cstdlib>
 
@@ -11,6 +12,8 @@
 
 using std::string;
 using std::list;
+using std::cout;
+using std::cin;
 
 const string GameCtrl::MSG_BAD_ALLOC = "Not enough memory to run the game.";
 const string GameCtrl::MSG_LOSE = "Oops! You lose!";
@@ -34,6 +37,10 @@ GameCtrl::~GameCtrl() {
 GameCtrl* GameCtrl::getInstance() {
     static GameCtrl instance;
     return &instance;
+}
+
+void GameCtrl::setVisibleGUI(const bool visible) {
+	visibleGUI = visible;
 }
 
 void GameCtrl::setFPS(const double fps_) {
@@ -97,6 +104,10 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
+	int g;
+	cout << "Enter any key to exit";
+	cin >> g;
+	
 }
 
 void GameCtrl::exitGameErr(const std::string &err) {

@@ -15,6 +15,7 @@ public:
 
     static GameCtrl* getInstance();
 
+	void setVisibleGUI(const bool visible);
     void setFPS(const double fps_);
     void setEnableAI(const bool enableAI_);
     void setEnableHamilton(const bool enableHamilton_);
@@ -66,6 +67,7 @@ private:
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
 
+	bool visibleGUI = false;
     double fps = 60.0;
     bool enableAI = true;
     bool enableHamilton = true;
