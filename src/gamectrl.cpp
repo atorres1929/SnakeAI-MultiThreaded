@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <chrono>
+#include <ctime>
 #include <cstdlib>
 
 #ifdef OS_WIN
@@ -14,6 +15,7 @@ using std::string;
 using std::list;
 using std::cout;
 using std::cin;
+using std::endl;
 
 const string GameCtrl::MSG_BAD_ALLOC = "Not enough memory to run the game.";
 const string GameCtrl::MSG_LOSE = "Oops! You lose!";
@@ -78,6 +80,7 @@ void GameCtrl::setMapCol(const SizeType n) {
 int GameCtrl::run() {
     try {
         init();
+		beginTime = std::chrono::system_clock::now();
         if (runTest) {
             test();
         } else {
@@ -91,7 +94,8 @@ int GameCtrl::run() {
 }
 
 void GameCtrl::sleepFPS() const {
-    util::sleep((long)((1.0 / fps) * 1000));
+	if (visibleGUI)
+		util::sleep((long)((1.0 / fps) * 1000));
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
@@ -104,8 +108,10 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
-	int g;
-	cout << "Enter any key to exit";
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
+	char g;
+	cout << "Enter any char to exit";
 	cin >> g;
 	
 }
@@ -126,6 +132,7 @@ void GameCtrl::mainLoop() {
                 snake.decideNext();
             }
             if (map->isAllBody()) {
+				endTime = std::chrono::system_clock::now();
                 exitGame(MSG_WIN);
             } else if (snake.isDead()) {
                 exitGame(MSG_LOSE);
@@ -133,7 +140,9 @@ void GameCtrl::mainLoop() {
                 moveSnake();
             }
         }
-        util::sleep(moveInterval);
+		if (visibleGUI) {
+			util::sleep(moveInterval);
+		}
     }
 }
 
@@ -234,8 +243,10 @@ void GameCtrl::initFiles() {
 
 void GameCtrl::startSubThreads() {
     runSubThread = true;
-    drawThread = std::thread(&GameCtrl::draw, this);
-    drawThread.detach();
+	if (visibleGUI) {
+		drawThread = std::thread(&GameCtrl::draw, this);
+		drawThread.detach();
+	}
     keyboardThread = std::thread(&GameCtrl::keyboard, this);
     keyboardThread.detach();
 }

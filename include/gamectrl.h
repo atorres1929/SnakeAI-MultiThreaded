@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 
+
 class GameCtrl {
 public:
     typedef Map::SizeType SizeType;
@@ -66,6 +67,9 @@ private:
     static const std::string MSG_WIN;
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
+
+	std::chrono::system_clock::time_point beginTime;
+	std::chrono::system_clock::time_point endTime;
 
 	bool visibleGUI = false;
     double fps = 60.0;
