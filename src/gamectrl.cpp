@@ -49,6 +49,10 @@ void GameCtrl::setFPS(const double fps_) {
     fps = fps_;
 }
 
+void GameCtrl::setUnlockMovement(const bool unlockMovement_) {
+	unlockMovement = unlockMovement_;
+}
+
 void GameCtrl::setEnableAI(const bool enableAI_) {
     enableAI = enableAI_;
 }
@@ -94,8 +98,9 @@ int GameCtrl::run() {
 }
 
 void GameCtrl::sleepFPS() const {
-	if (visibleGUI)
+	if (visibleGUI) {
 		util::sleep((long)((1.0 / fps) * 1000));
+	}
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
@@ -108,6 +113,7 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
+	endTime = endTime = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
 	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
 	char g;
@@ -132,7 +138,6 @@ void GameCtrl::mainLoop() {
                 snake.decideNext();
             }
             if (map->isAllBody()) {
-				endTime = std::chrono::system_clock::now();
                 exitGame(MSG_WIN);
             } else if (snake.isDead()) {
                 exitGame(MSG_LOSE);
@@ -140,7 +145,7 @@ void GameCtrl::mainLoop() {
                 moveSnake();
             }
         }
-		if (visibleGUI) {
+		if (!unlockMovement) {
 			util::sleep(moveInterval);
 		}
     }
@@ -366,8 +371,10 @@ void GameCtrl::keyboardMove(Snake &s, const Direction d) {
 
 void GameCtrl::test() {
     //testFood();
-    testSearch();
+    //testSearch();
     //testHamilton();
+	testSequentialPathSearch();
+	testThreadedPathSearch();
 }
 
 void GameCtrl::testFood() {
@@ -427,4 +434,21 @@ void GameCtrl::testHamilton() {
     snake.addBody(Pos(1, 1));
     snake.testHamilton();
     exitGame("testHamilton() finished.");
+}
+
+void GameCtrl::testSequentialPathSearch() {
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
+	}
+	map->createFood(Pos(5, 1));
+	snake.setMap(map);
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	snake.testSequential();
+	exitGame("testSequential() finished.");
+}
+
+void GameCtrl::testThreadedPathSearch() {
+
 }

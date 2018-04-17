@@ -24,7 +24,10 @@ int main() {
     // You can select different testing methods by modifying GameCtrl::test().
     game->setRunTest(false);
 
-	game->setVisibleGUI(false);
+	//Set whether the snake will be displayed
+	game->setVisibleGUI(true);
+
+	game->setUnlockMovement(false);
 
     // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
     game->setMapRow(10);

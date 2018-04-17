@@ -17,6 +17,7 @@ public:
     static GameCtrl* getInstance();
 
 	void setVisibleGUI(const bool visible);
+	void setUnlockMovement(const bool unlockMovement_);
     void setFPS(const double fps_);
     void setEnableAI(const bool enableAI_);
     void setEnableHamilton(const bool enableHamilton_);
@@ -51,6 +52,8 @@ private:
     void testFood();
     void testSearch();
     void testHamilton();
+	void testSequentialPathSearch();
+	void testThreadedPathSearch();
 
     void startSubThreads();
 
@@ -72,6 +75,7 @@ private:
 	std::chrono::system_clock::time_point endTime;
 
 	bool visibleGUI = false;
+	bool unlockMovement = false;
     double fps = 60.0;
     bool enableAI = true;
     bool enableHamilton = true;

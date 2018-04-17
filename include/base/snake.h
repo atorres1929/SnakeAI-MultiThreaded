@@ -47,6 +47,8 @@ public:
     void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testHamilton();
+	void testSequential();
+	void testThreaded();
 
 private:
     void removeTail();

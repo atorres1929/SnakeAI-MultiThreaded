@@ -64,6 +64,17 @@ void Snake::testHamilton() {
     }
 }
 
+void Snake::testSequential() {
+	while (bodies.size() < 4) {
+		decideNext();
+		move();
+	}
+}
+
+void Snake::testThreaded() {
+
+}
+
 void Snake::addBody(const Pos &p) {
     if (bodies.size() == 0) {  // Insert a head
         map->getPoint(p).setType(Point::Type::SNAKE_HEAD);
