@@ -72,7 +72,10 @@ void Snake::testSequential() {
 }
 
 void Snake::testThreaded() {
-
+	while (bodies.size() < 4) {
+		decideNext();
+		move();
+	}
 }
 
 void Snake::addBody(const Pos &p) {
@@ -129,9 +132,9 @@ void Snake::decideNext() {
         direc = NONE;
         return;
     }
-
+	
     if (hamiltonEnabled) {  // AI based on the Hamiltonian cycle
-
+		
         SizeType size = map->getSize();
         Pos head = getHead(), tail = getTail();
         Point::ValueType tailIndex = map->getPoint(tail).getIdx();
@@ -164,6 +167,7 @@ void Snake::decideNext() {
                 direc = head.getDirectionTo(adjPos);
             }
         }
+		//TODO MULTITHREAD THIS
 
     } else {  // AI based on graph search
 
