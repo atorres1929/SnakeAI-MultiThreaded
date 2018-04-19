@@ -115,6 +115,7 @@ void GameCtrl::exitGame(const std::string &msg) {
     runMainThread = false;
 	endTime = endTime = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "s" << endl;
 	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
 	char g;
 	cout << "Enter any char to exit";

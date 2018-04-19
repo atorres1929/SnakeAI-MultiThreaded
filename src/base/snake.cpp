@@ -3,6 +3,7 @@
 #include <queue>
 #include <algorithm>
 #include <stdexcept>
+#include <future>
 
 using std::vector;
 using std::list;
@@ -65,6 +66,7 @@ void Snake::testHamilton() {
 }
 
 void Snake::testSequential() {
+	enableHamilton();
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
@@ -72,10 +74,15 @@ void Snake::testSequential() {
 }
 
 void Snake::testThreaded() {
+	enableHamilton();
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
 	}
+}
+
+double Snake::getTotalTimeAdj() {
+	return totalTimeAdj;
 }
 
 void Snake::addBody(const Pos &p) {
@@ -125,6 +132,10 @@ void Snake::enableHamilton() {
     buildHamilton();
 }
 
+void Snake::enableThreaded() {
+	threaded = true;
+}
+
 void Snake::decideNext() {
     if (isDead()) {
         return;
@@ -160,14 +171,47 @@ void Snake::decideNext() {
         // Move along the hamitonian cycle
         headIndex = map->getPoint(head).getIdx();
         vector<Pos> adjPositions = head.getAllAdj();
-        for (const Pos &adjPos : adjPositions) {
-            const Point &adjPoint = map->getPoint(adjPos);
-            Point::ValueType adjIndex = adjPoint.getIdx();
-            if (adjIndex == (headIndex + 1) % size) {
-                direc = head.getDirectionTo(adjPos);
-            }
-        }
+
 		//TODO MULTITHREAD THIS
+		if (threaded) {
+			int threads = adjPositions.size();
+			vector<std::future<void>> future(threads);
+			for (int t = 0; t < threads; t++) {
+				Direction d;
+				std::chrono::system_clock::time_point beginTime;
+				future[t] = std::async(std::launch::async, [adjPositions, t, headIndex, size, head, d] {
+					const Pos &adjPos = adjPositions.at(t);
+					const Point &adjPoint = map->getPoint(adjPos);
+					Point::ValueType adjIndex = adjPoint.getIdx();
+					if (adjIndex == (headIndex + 1) % size) {
+						d = head.getDirectionTo(adjPos);
+					}
+				});
+				for (const Pos &adjPos : adjPositions) {
+					const Point &adjPoint = map->getPoint(adjPos);
+					Point::ValueType adjIndex = adjPoint.getIdx();
+					if (adjIndex == (headIndex + 1) % size) {
+						direc = head.getDirectionTo(adjPos);
+					}
+				}
+				std::chrono::system_clock::time_point endTime;
+				std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+				totalTimeAdj += elapsed_seconds.count();
+			}
+		}
+		else {
+			std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+			for (const Pos &adjPos : adjPositions) {
+				const Point &adjPoint = map->getPoint(adjPos);
+				Point::ValueType adjIndex = adjPoint.getIdx();
+				if (adjIndex == (headIndex + 1) % size) {
+					direc = head.getDirectionTo(adjPos);
+				}
+			}
+			std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+			std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+			totalTimeAdj += elapsed_seconds.count();
+		}
 
     } else {  // AI based on graph search
 
@@ -284,7 +328,9 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
                 break;
             }
         }
+
         // Traverse the adjacent positions
+		
         for (const Pos &adjPos : adjPositions) {
             Point &adjPoint = map->getPoint(adjPos);
             if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
@@ -293,6 +339,7 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
                 openList.push(adjPos);
             }
         }
+		//TODO Multithread this
     }
 }
 

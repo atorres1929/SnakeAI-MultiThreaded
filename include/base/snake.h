@@ -38,6 +38,13 @@ public:
     */
     void enableHamilton();
 
+	/*
+	Changes the game to run on threads
+	*/
+	void enableThreaded();
+
+	double getTotalTimeAdj();
+
     /*
     Decide the next moving direction. After its execution,
     the next moving direction can be got by calling getDirection().
@@ -107,6 +114,8 @@ private:
     Direction direc = NONE;
     bool dead = false;
     bool hamiltonEnabled = false;
+	bool threaded = false;
+	double totalTimeAdj;
 };
 
 #endif
