@@ -45,6 +45,8 @@ public:
 
 	double getTotalTimeAdj();
 
+	bool isThreaded();
+
     /*
     Decide the next moving direction. After its execution,
     the next moving direction can be got by calling getDirection().

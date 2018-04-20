@@ -90,7 +90,22 @@ int GameCtrl::run() {
         } else {
             mainLoop();
         }
-        return 0;
+		bool finished = true;
+		while (finished) {
+			char g;
+			cout << "Process complete." << endl;
+			cout << "Enter R to Restart || Enter E to Exit";
+			cin >> g;
+			if (g == 'R') {
+				finished = false;
+				cout << endl << endl;
+				cout << "==================================================" << endl;
+				GameCtrl::run();
+			}
+			else {
+				return 0;
+			}
+		}
     } catch (const std::exception &e) {
         exitGameErr(e.what());
         return -1;
@@ -114,13 +129,17 @@ void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.unlock();
     runMainThread = false;
 	endTime = endTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "s" << endl;
-	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
-	char g;
-	cout << "Enter any char to exit";
-	cin >> g;
+	std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
 	
+	if (snake.isThreaded()) {
+		cout << "Threaded" << endl;
+		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
+	}
+	else {
+		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
+	}
+	cout << "Elapsed Time: " << elapsed_seconds.count() << "ms" << endl;
+	cout << endl;
 }
 
 void GameCtrl::exitGameErr(const std::string &err) {
@@ -128,8 +147,10 @@ void GameCtrl::exitGameErr(const std::string &err) {
 }
 
 void GameCtrl::printMsg(const std::string &msg) {
-    Console::setCursor(0, (int)mapRowCnt);
-    Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+	if (visibleGUI && !runTest) {
+		Console::setCursor(0, (int)mapRowCnt);
+		Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+	}
 }
 
 void GameCtrl::mainLoop() {
@@ -199,7 +220,9 @@ void GameCtrl::saveMapContent() const {
 }
 
 void GameCtrl::init() {
-    Console::clear();
+	if (visibleGUI) {
+		Console::clear();
+	}
     initMap();
     if (!runTest) {
         initSnake();
@@ -441,15 +464,25 @@ void GameCtrl::testSequentialPathSearch() {
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
 	}
-	map->createFood(Pos(5, 1));
+	map->createFood(Pos(8, 8));
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
 	snake.addBody(Pos(1, 1));
 	snake.testSequential();
-	exitGame("testSequential() finished.");
+	exitGame("testSequentialPathSearch() finished.");
 }
 
 void GameCtrl::testThreadedPathSearch() {
-
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
+	}
+	map->createFood(Pos(8, 8));
+	snake.setMap(map);
+	snake.enableThreaded();
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	snake.testSequential();
+	exitGame("testThreadedPathSearch() finished.");
 }

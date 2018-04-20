@@ -81,6 +81,10 @@ void Snake::testThreaded() {
 	}
 }
 
+bool Snake::isThreaded() {
+	return threaded;
+}
+
 double Snake::getTotalTimeAdj() {
 	return totalTimeAdj;
 }
@@ -174,30 +178,30 @@ void Snake::decideNext() {
 
 		//TODO MULTITHREAD THIS
 		if (threaded) {
+			std::chrono::system_clock::time_point beginTime;
+
 			int threads = adjPositions.size();
-			vector<std::future<void>> future(threads);
+			vector<std::future<Direction>> future(threads);
+
 			for (int t = 0; t < threads; t++) {
-				Direction d;
-				std::chrono::system_clock::time_point beginTime;
-				future[t] = std::async(std::launch::async, [adjPositions, t, headIndex, size, head, d] {
+				Map *m = map;
+				future[t] = std::async(std::launch::async, [adjPositions, t, headIndex, size, head, m] {
 					const Pos &adjPos = adjPositions.at(t);
-					const Point &adjPoint = map->getPoint(adjPos);
+					const Point &adjPoint = m->getPoint(adjPos);
 					Point::ValueType adjIndex = adjPoint.getIdx();
 					if (adjIndex == (headIndex + 1) % size) {
-						d = head.getDirectionTo(adjPos);
+						return head.getDirectionTo(adjPos);
 					}
 				});
-				for (const Pos &adjPos : adjPositions) {
-					const Point &adjPoint = map->getPoint(adjPos);
-					Point::ValueType adjIndex = adjPoint.getIdx();
-					if (adjIndex == (headIndex + 1) % size) {
-						direc = head.getDirectionTo(adjPos);
-					}
-				}
-				std::chrono::system_clock::time_point endTime;
-				std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-				totalTimeAdj += elapsed_seconds.count();
 			}
+
+			for (int t = 0; t < threads; t++) {
+				direc = future[t].get();
+			}
+
+			std::chrono::system_clock::time_point endTime;
+			std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime);
+			totalTimeAdj += elapsed_seconds.count();
 		}
 		else {
 			std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
@@ -209,7 +213,7 @@ void Snake::decideNext() {
 				}
 			}
 			std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-			std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+			std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime);
 			totalTimeAdj += elapsed_seconds.count();
 		}
 
