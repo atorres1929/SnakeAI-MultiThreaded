@@ -67,6 +67,7 @@ void Snake::testHamilton() {
 
 void Snake::testSequential() {
 	enableHamilton();
+	totalTimeBFS = 0;
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
@@ -75,6 +76,7 @@ void Snake::testSequential() {
 
 void Snake::testThreaded() {
 	enableHamilton();
+	totalTimeBFS = 0;
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
@@ -268,6 +270,10 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 }
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
+	//Clock
+	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point endTime;
+
     // Init
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
@@ -281,34 +287,37 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
     openList.push(from);
     // BFS
     while (!openList.empty()) {
-        Pos curPos = openList.front();
-        const Point &curPoint = map->getPoint(curPos);
-        openList.pop();
-        map->showTestPos(curPos);
-        if (curPos == to) {
-            buildPath(from, to, path);
-            break;
-        }
-        vector<Pos> adjPositions = curPos.getAllAdj();
-        Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-        // Arrange the order of traversing to make the result path as straight as possible
-        Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
-        for (SizeType i = 0; i < adjPositions.size(); ++i) {
-            if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
-                util::swap(adjPositions[0], adjPositions[i]);
-                break;
-            }
-        }
-
-        // Traverse the adjacent positions
-		
-		if (threaded) {
+		if (threaded) {			
 			int queueSize = openList.size();
 			vector<std::future<void>> queueFuture(queueSize);
 			Map *map = this->map;
+			Direction dir = direc;
+			Pos curPos = openList.front(); //TODO address the access violation reading location
 			for (int queueThread = 0; queueThread < queueSize; queueThread++) {
-				queueFuture[queueThread] = std::async(std::launch::async, [&openList, &adjPositions, &curPos, &curPoint, &map] {
+				queueFuture[queueThread] = std::async(std::launch::async, [&openList, &curPos, &map, &from, dir] {
+					const Point &curPoint = map->getPoint(curPos);
 					openList.pop();
+					map->showTestPos(curPos);
+
+					//End condition in sequential
+					/*if (curPos == to) {
+						buildPath(from, to, path);
+						break;
+					}*/
+
+					vector<Pos> adjPositions = curPos.getAllAdj();
+					Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
+					// Arrange the order of traversing to make the result path as straight as possible
+					Direction bestDirec = (curPos == from ? dir : curPoint.getParent().getDirectionTo(curPos));
+					for (SizeType i = 0; i < adjPositions.size(); ++i) {
+						if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+							util::swap(adjPositions[0], adjPositions[i]);
+							break;
+						}
+					}
+
+					// Traverse the adjacent positions
+
 					int adjPositionSize = adjPositions.size();
 					vector<std::future<void>> adjacentFuture(adjPositionSize);
 					for (int adjacentThread = 0; adjacentThread < adjPositionSize; adjacentThread++) {
@@ -323,10 +332,37 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 						});
 
 					}
+					for (int adjacentThread = 0; adjacentThread < adjPositionSize; adjacentThread++) {
+						adjacentFuture[adjacentThread].get();
+					}
 				});
+			}
+			for (int queueThread = 0; queueThread < queueSize; queueThread++) {
+				queueFuture[queueThread].get();
 			}
 		}
 		else {
+			Pos curPos = openList.front();
+			const Point &curPoint = map->getPoint(curPos);
+			openList.pop();
+			map->showTestPos(curPos);
+			if (curPos == to) {
+				buildPath(from, to, path);
+				break;
+			}
+			vector<Pos> adjPositions = curPos.getAllAdj();
+			Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
+			// Arrange the order of traversing to make the result path as straight as possible
+			Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
+			for (SizeType i = 0; i < adjPositions.size(); ++i) {
+				if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+					util::swap(adjPositions[0], adjPositions[i]);
+					break;
+				}
+			}
+
+			// Traverse the adjacent positions
+
 			for (const Pos &adjPos : adjPositions) {
 				Point &adjPoint = map->getPoint(adjPos);
 				if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
@@ -336,7 +372,11 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 				}
 			}
 		}
-		//TODO Multithread this
+
+		//Clock
+		endTime = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
+		totalTimeBFS += elapsed_seconds.count();
     }
 }
 

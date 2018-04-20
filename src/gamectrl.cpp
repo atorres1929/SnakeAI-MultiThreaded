@@ -128,15 +128,16 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
-	endTime = endTime = std::chrono::system_clock::now();
+	endTime = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
 	
 	if (snake.isThreaded()) {
 		cout << "Threaded" << endl;
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeBFS() << "ns" << endl;
+		cout << "Elapsed Time for BFS: " << snake.getTotalTimeBFS() << "ms" << endl;
 	}
 	else {
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeBFS() << "ns" << endl;
+		cout << "Sequential" << endl;
+		cout << "Elapsed Time for BFS: " << snake.getTotalTimeBFS() << "ms" << endl;
 	}
 	cout << "Elapsed Time: " << elapsed_seconds.count() << "ms" << endl;
 	cout << endl;
@@ -397,7 +398,7 @@ void GameCtrl::test() {
     //testFood();
     //testSearch();
     //testHamilton();
-	testSequentialPathSearch();
+	//testSequentialPathSearch();
 	testThreadedPathSearch();
 }
 
