@@ -25,9 +25,9 @@ int main() {
     game->setRunTest(true);
 
 	//Set whether the snake will be displayed
-	game->setVisibleGUI(true);
+	game->setVisibleGUI(false);
 
-	game->setUnlockMovement(false);
+	game->setUnlockMovement(true);
 
     // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
     game->setMapRow(10);
