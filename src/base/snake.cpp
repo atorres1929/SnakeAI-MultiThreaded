@@ -85,8 +85,8 @@ bool Snake::isThreaded() {
 	return threaded;
 }
 
-double Snake::getTotalTimeAdj() {
-	return totalTimeAdj;
+double Snake::getTotalTimeBFS() {
+	return totalTimeBFS;
 }
 
 void Snake::addBody(const Pos &p) {
@@ -176,45 +176,12 @@ void Snake::decideNext() {
         headIndex = map->getPoint(head).getIdx();
         vector<Pos> adjPositions = head.getAllAdj();
 
-		//TODO MULTITHREAD THIS
-		if (threaded) {
-			std::chrono::system_clock::time_point beginTime;
-
-			int threads = adjPositions.size();
-			vector<std::future<Direction>> future(threads);
-
-			for (int t = 0; t < threads; t++) {
-				Map *m = map;
-				future[t] = std::async(std::launch::async, [adjPositions, t, headIndex, size, head, m] {
-					const Pos &adjPos = adjPositions.at(t);
-					const Point &adjPoint = m->getPoint(adjPos);
-					Point::ValueType adjIndex = adjPoint.getIdx();
-					if (adjIndex == (headIndex + 1) % size) {
-						return head.getDirectionTo(adjPos);
-					}
-				});
+		for (const Pos &adjPos : adjPositions) {
+			const Point &adjPoint = map->getPoint(adjPos);
+			Point::ValueType adjIndex = adjPoint.getIdx();
+			if (adjIndex == (headIndex + 1) % size) {
+				direc = head.getDirectionTo(adjPos);
 			}
-
-			for (int t = 0; t < threads; t++) {
-				direc = future[t].get();
-			}
-
-			std::chrono::system_clock::time_point endTime;
-			std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime);
-			totalTimeAdj += elapsed_seconds.count();
-		}
-		else {
-			std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
-			for (const Pos &adjPos : adjPositions) {
-				const Point &adjPoint = map->getPoint(adjPos);
-				Point::ValueType adjIndex = adjPoint.getIdx();
-				if (adjIndex == (headIndex + 1) % size) {
-					direc = head.getDirectionTo(adjPos);
-				}
-			}
-			std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-			std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime);
-			totalTimeAdj += elapsed_seconds.count();
 		}
 
     } else {  // AI based on graph search
@@ -335,14 +302,40 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 
         // Traverse the adjacent positions
 		
-        for (const Pos &adjPos : adjPositions) {
-            Point &adjPoint = map->getPoint(adjPos);
-            if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
-                adjPoint.setParent(curPos);
-                adjPoint.setDist(curPoint.getDist() + 1);
-                openList.push(adjPos);
-            }
-        }
+		if (threaded) {
+			int queueSize = openList.size();
+			vector<std::future<void>> queueFuture(queueSize);
+			Map *map = this->map;
+			for (int queueThread = 0; queueThread < queueSize; queueThread++) {
+				queueFuture[queueThread] = std::async(std::launch::async, [&openList, &adjPositions, &curPos, &curPoint, &map] {
+					openList.pop();
+					int adjPositionSize = adjPositions.size();
+					vector<std::future<void>> adjacentFuture(adjPositionSize);
+					for (int adjacentThread = 0; adjacentThread < adjPositionSize; adjacentThread++) {
+						adjacentFuture[adjacentThread] = std::async(std::launch::async, [&openList, &adjPositions, &curPos, &map, &curPoint, adjacentThread] {
+							Pos &adjPos = adjPositions.at(adjacentThread);
+							Point &adjPoint = map->getPoint(adjPos);
+							if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
+								adjPoint.setParent(curPos);
+								adjPoint.setDist(curPoint.getDist() + 1);
+								openList.push(adjPos);
+							}
+						});
+
+					}
+				});
+			}
+		}
+		else {
+			for (const Pos &adjPos : adjPositions) {
+				Point &adjPoint = map->getPoint(adjPos);
+				if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
+					adjPoint.setParent(curPos);
+					adjPoint.setDist(curPoint.getDist() + 1);
+					openList.push(adjPos);
+				}
+			}
+		}
 		//TODO Multithread this
     }
 }

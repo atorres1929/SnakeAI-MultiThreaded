@@ -43,7 +43,7 @@ public:
 	*/
 	void enableThreaded();
 
-	double getTotalTimeAdj();
+	double getTotalTimeBFS();
 
 	bool isThreaded();
 
@@ -117,7 +117,7 @@ private:
     bool dead = false;
     bool hamiltonEnabled = false;
 	bool threaded = false;
-	double totalTimeAdj;
+	double totalTimeBFS;
 };
 
 #endif

@@ -133,10 +133,10 @@ void GameCtrl::exitGame(const std::string &msg) {
 	
 	if (snake.isThreaded()) {
 		cout << "Threaded" << endl;
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
+		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeBFS() << "ns" << endl;
 	}
 	else {
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
+		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeBFS() << "ns" << endl;
 	}
 	cout << "Elapsed Time: " << elapsed_seconds.count() << "ms" << endl;
 	cout << endl;
