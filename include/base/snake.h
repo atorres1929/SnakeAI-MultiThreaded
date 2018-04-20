@@ -58,6 +58,7 @@ public:
     void testHamilton();
 	void testSequential();
 	void testThreaded();
+	int getMaxNumThreads();
 
 private:
     void removeTail();
@@ -117,7 +118,8 @@ private:
     bool dead = false;
     bool hamiltonEnabled = false;
 	bool threaded = false;
-	double totalTimeBFS;
+	double maxTimeBFS;
+	int maxNumThreads;
 };
 
 #endif

@@ -140,6 +140,7 @@ void GameCtrl::exitGame(const std::string &msg) {
 		cout << "Elapsed Time for BFS: " << snake.getTotalTimeBFS() << "ms" << endl;
 	}
 	cout << "Elapsed Time: " << elapsed_seconds.count() << "ms" << endl;
+	cout << "Max Threads: " << snake.getMaxNumThreads() << endl;
 	cout << endl;
 }
 
@@ -465,7 +466,7 @@ void GameCtrl::testSequentialPathSearch() {
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
 	}
-	map->createFood(Pos(8, 8));
+	map->createFood(Pos(18, 18));
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
@@ -478,7 +479,7 @@ void GameCtrl::testThreadedPathSearch() {
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
 	}
-	map->createFood(Pos(8, 8));
+	map->createFood(Pos(18, 18));
 	snake.setMap(map);
 	snake.enableThreaded();
 	snake.addBody(Pos(1, 3));
