@@ -290,11 +290,11 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 		if (threaded) {			
 			int queueSize = openList.size();
 			vector<std::future<void>> queueFuture(queueSize);
-			Map *map = this->map;
 			Direction dir = direc;
-			Pos curPos = openList.front(); //TODO address the access violation reading location
+			Map *map = this->map;
 			for (int queueThread = 0; queueThread < queueSize; queueThread++) {
-				queueFuture[queueThread] = std::async(std::launch::async, [&openList, &curPos, &map, &from, dir] {
+				queueFuture[queueThread] = std::async(std::launch::async, [&openList, &from, &map, dir] {
+					Pos curPos = openList.front(); //TODO address the access violation reading location
 					const Point &curPoint = map->getPoint(curPos);
 					openList.pop();
 					map->showTestPos(curPos);
