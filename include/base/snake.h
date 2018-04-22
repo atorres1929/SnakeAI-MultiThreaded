@@ -43,6 +43,14 @@ public:
 	*/
 	void enableThreaded();
 
+	/*
+	Get the time that the longest BFS took
+	*/
+	double getMaxTimeBFS();
+
+	/*
+	Get the total amount of time to complete the BFS
+	*/
 	double getTotalTimeBFS();
 
 	bool isThreaded();
@@ -56,8 +64,7 @@ public:
     void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testHamilton();
-	void testSequential();
-	void testThreaded();
+	void testPathSearch();
 	int getMaxNumThreads();
 
 private:
@@ -119,6 +126,7 @@ private:
     bool hamiltonEnabled = false;
 	bool threaded = false;
 	double maxTimeBFS;
+	double totalTimeBFS;
 	int maxNumThreads;
 };
 

@@ -66,16 +66,7 @@ void Snake::testHamilton() {
 	}
 }
 
-void Snake::testSequential() {
-	enableHamilton();
-	maxTimeBFS = 0;
-	while (bodies.size() < 4) {
-		decideNext();
-		move();
-	}
-}
-
-void Snake::testThreaded() {
+void Snake::testPathSearch() {
 	enableHamilton();
 	maxTimeBFS = 0;
 	while (bodies.size() < 4) {
@@ -88,8 +79,12 @@ bool Snake::isThreaded() {
 	return threaded;
 }
 
-double Snake::getTotalTimeBFS() {
+double Snake::getMaxTimeBFS() {
 	return maxTimeBFS;
+}
+
+double Snake::getTotalTimeBFS() {
+	return totalTimeBFS;
 }
 
 int Snake::getMaxNumThreads() {
@@ -297,49 +292,55 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 	map->getPoint(from).setDist(0);
 	queue<Pos> openList;
 	openList.push(from);
+	
 	// BFS
 	while (!openList.empty()) {
-		if (threaded) {
+		//FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
+		if (threaded) {	
 			int queueSize = openList.size();
 #pragma omp parallel for
 			for (int i = 0; i < queueSize; i++) {
+				Pos curPos;
 #pragma omp critical
 				{
-					Pos curPos = openList.front();
-					const Point &curPoint = map->getPoint(curPos);
+					curPos = openList.front();
 					openList.pop();
-					map->showTestPos(curPos);
-					if (curPos == to) {
-						buildPath(from, to, path);
-						openList.empty();
-					}
-					vector<Pos> adjPositions = curPos.getAllAdj();
-					Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-					// Arrange the order of traversing to make the result path as straight as possible
-					Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
-					for (SizeType i = 0; i < adjPositions.size(); ++i) {
-						if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
-							util::swap(adjPositions[0], adjPositions[i]);
-							break;
-						}
-					}
-
-					// Traverse the adjacent positions
-					for (int j = 0; j < adjPositions.size(); j++) {
-						const Pos &adjPos = adjPositions.at(j);
-						Point &adjPoint = map->getPoint(adjPos);
-						if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
-							adjPoint.setParent(curPos);
-							adjPoint.setDist(curPoint.getDist() + 1);
-							openList.push(adjPos);
-						}
-						if (maxNumThreads < omp_get_num_threads()) {
-							maxNumThreads = omp_get_num_threads();
-						}
+				}
+				const Point &curPoint = map->getPoint(curPos);
+				map->showTestPos(curPos);
+				if (curPos == to) {
+					buildPath(from, to, path);
+#pragma omp critical
+					openList.empty();
+				}
+				vector<Pos> adjPositions = curPos.getAllAdj();
+				Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
+				// Arrange the order of traversing to make the result path as straight as possible
+				Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
+				for (SizeType i = 0; i < adjPositions.size(); ++i) {
+					if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+						util::swap(adjPositions[0], adjPositions[i]);
+						break;
 					}
 				}
-				
+
+				// Traverse the adjacent positions
+//#pragma omp parallel for
+				for (int j = 0; j < adjPositions.size(); j++) {
+					const Pos &adjPos = adjPositions.at(j);
+					Point &adjPoint = map->getPoint(adjPos);
+					if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
+						adjPoint.setParent(curPos);
+						adjPoint.setDist(curPoint.getDist() + 1);
+#pragma omp critical
+						openList.push(adjPos);
+					}
+					if (maxNumThreads < omp_get_num_threads()) {
+						maxNumThreads = omp_get_num_threads();
+					}
+				}
 			}
+
 		}
 		else {
 			Pos curPos = openList.front();
@@ -378,11 +379,14 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 
 		//Clock
 		endTime = std::chrono::system_clock::now();
-		std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime);
+		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
 		if (maxTimeBFS < elapsed_seconds.count()) {
 			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
+	endTime = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	totalTimeBFS = elapsed_seconds.count();
 }
 
 void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
