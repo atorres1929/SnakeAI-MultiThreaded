@@ -285,6 +285,17 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 	map->getPoint(goal).setType(oriType);  // Retore point type
 }
 
+/*
+TODO
+
+Latest discovery suggests that OpenMP, which seems to rely on how many cores there are rather
+than true Multithreading, isn't the best option. I should look for pThreading or something other
+option for threading, as OpenMP doesn't offer the control and versatility that is needed.
+
+
+*/
+
+
 //FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
 void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
 	//Clock
