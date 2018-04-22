@@ -325,7 +325,6 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 				}
 
 				// Traverse the adjacent positions
-//#pragma omp parallel for
 				for (int j = 0; j < adjPositions.size(); j++) {
 					const Pos &adjPos = adjPositions.at(j);
 					Point &adjPoint = map->getPoint(adjPos);
