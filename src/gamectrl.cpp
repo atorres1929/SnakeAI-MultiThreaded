@@ -41,6 +41,10 @@ GameCtrl* GameCtrl::getInstance() {
     return &instance;
 }
 
+void GameCtrl::setThreaded(const bool threaded) {
+	isThreaded = threaded;
+}
+
 void GameCtrl::setVisibleGUI(const bool visible) {
 	visibleGUI = visible;
 }
@@ -95,7 +99,7 @@ int GameCtrl::run() {
 			cout << "Process complete." << endl;
 			cout << "Enter R to Restart || Enter E to Exit";
 			cin >> g;
-			if (g == 'R') {
+			if (g == 'R' || g == 'r') {
 				finished = false;
 				cout << endl << endl;
 				cout << "==================================================" << endl;
@@ -135,10 +139,19 @@ void GameCtrl::exitGame(const std::string &msg) {
 	else {
 		cout << "Sequential" << endl;
 	}
-	cout << "Elapsed Time for BFS: " << snake.getTotalTimeBFS() << "s" << endl;
-	cout << "Longest Time for single BFS: " << snake.getMaxTimeBFS() << "s" << endl;
-	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
+	cout << "Elapsed Time for BFS: ";
+	Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+	cout << "Biggest Time for BFS: ";
+	Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+	cout << "Elapsed Time for AI:  ";
+	Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
 	cout << "Max Threads: " << snake.getMaxNumThreads() << endl;
+
+	if (visibleGUI && runTest) {
+		cout << "Enter any character to proceed to next test" << endl;
+		char g;
+		cin >> g;
+	}
 	cout << endl;
 }
 
@@ -255,10 +268,15 @@ void GameCtrl::initSnake() {
     if (enableHamilton) {
         snake.enableHamilton();
     }
+	if (isThreaded) {
+		snake.enableThreaded();
+	}
 }
 
 void GameCtrl::initFiles() {
+#ifdef defined(OSWIN)
     errno_t error = fopen_s(&movementFile, MAP_INFO_FILENAME.c_str(), "w");
+#endif
     if (!movementFile) {
         throw std::runtime_error("GameCtrl.initFiles(): Fail to open file: " + MAP_INFO_FILENAME);
     } else {

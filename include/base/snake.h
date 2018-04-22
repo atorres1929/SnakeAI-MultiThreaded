@@ -136,9 +136,9 @@ private:
     bool dead = false;
     bool hamiltonEnabled = false;
 	bool threaded = false;
-	double maxTimeBFS;
-	double totalTimeBFS;
-	int maxNumThreads;
+	double maxTimeBFS = 0;
+	double totalTimeBFS = 0;
+	int maxNumThreads = 0;
 };
 
 #endif

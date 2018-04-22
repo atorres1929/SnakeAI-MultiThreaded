@@ -16,6 +16,7 @@ public:
 
     static GameCtrl* getInstance();
 
+	void setThreaded(const bool threaded);
 	void setVisibleGUI(const bool visible);
 	void setUnlockMovement(const bool unlockMovement_);
     void setFPS(const double fps_);
@@ -74,6 +75,7 @@ private:
 	std::chrono::system_clock::time_point beginTime;
 	std::chrono::system_clock::time_point endTime;
 
+	bool isThreaded = false;
 	bool visibleGUI = false;
 	bool unlockMovement = false;
     double fps = 60.0;

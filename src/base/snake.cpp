@@ -277,7 +277,7 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 		}
 		std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-		totalTimeBFS = elapsed_seconds.count();
+		totalTimeBFS += elapsed_seconds.count();
 	}
 	else if (pathType == 1) {
 		findMaxPath(getHead(), goal, path);
@@ -307,7 +307,7 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 	// BFS
 	while (!openList.empty()) {
 		int queueSize = openList.size();
-#pragma omp parallel for num_threads(8) 
+#pragma omp parallel for
 		for (int i = 0; i < queueSize; i++) {
 			Pos curPos;
 #pragma omp critical
@@ -355,11 +355,6 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
-
-	//Clock
-	/*endTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	totalTimeBFS = elapsed_seconds.count();*/
 }
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
@@ -421,11 +416,6 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
-
-	//Clock
-	/*endTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	totalTimeBFS = elapsed_seconds.count();*/
 }
 
 void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
