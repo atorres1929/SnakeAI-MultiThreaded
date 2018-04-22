@@ -424,8 +424,13 @@ void GameCtrl::testSequentialPathSearch() {
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
 	}
+	if (mapRowCnt == 20 && mapColCnt == 20) {
+		map->createFood(Pos(18, 18));
+	}
+	else if (mapRowCnt == 10 && mapColCnt == 10) {
+		map->createFood(Pos(8, 8));
+	}
 	snake = Snake();
-	map->createFood(Pos(18, 18));
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
@@ -441,8 +446,13 @@ void GameCtrl::testThreadedPathSearch() {
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testThreadedPathSearch() requires map size 10x10");
 	}
+	if (mapRowCnt == 20 && mapColCnt == 20) {
+		map->createFood(Pos(18, 18));
+	}
+	else if (mapRowCnt == 10 && mapColCnt == 10) {
+		map->createFood(Pos(8, 8));
+	}
 	snake = Snake();
-	map->createFood(Pos(18, 18));
 	snake.setMap(map);
 	snake.enableThreaded();
 	snake.addBody(Pos(1, 3));
