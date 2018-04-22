@@ -268,12 +268,98 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 	Point::Type oriType = map->getPoint(goal).getType();
 	map->getPoint(goal).setType(Point::Type::EMPTY);
 	if (pathType == 0) {
-		findMinPath(getHead(), goal, path);
+		std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+		if (threaded) {
+			findMinPathThreaded(getHead(), goal, path);
+		}
+		else {
+			findMinPath(getHead(), goal, path);
+		}
+		std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+		totalTimeBFS = elapsed_seconds.count();
 	}
 	else if (pathType == 1) {
 		findMaxPath(getHead(), goal, path);
 	}
 	map->getPoint(goal).setType(oriType);  // Retore point type
+}
+
+//FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
+void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
+	//Clock
+	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point endTime;
+
+	// Init
+	SizeType row = map->getRowCount(), col = map->getColCount();
+	for (SizeType i = 1; i < row - 1; ++i) {
+		for (SizeType j = 1; j < col - 1; ++j) {
+			map->getPoint(Pos(i, j)).setDist(Point::MAX_VALUE);
+		}
+	}
+	path.clear();
+	map->getPoint(from).setDist(0);
+	queue<Pos> openList;
+	openList.push(from);
+
+
+	// BFS
+	while (!openList.empty()) {
+		int queueSize = openList.size();
+#pragma omp parallel for num_threads(8) 
+		for (int i = 0; i < queueSize; i++) {
+			Pos curPos;
+#pragma omp critical
+			{
+				curPos = openList.front();
+				openList.pop();
+			}
+			const Point &curPoint = map->getPoint(curPos);
+			map->showTestPos(curPos);
+			if (curPos == to) {
+				buildPath(from, to, path);
+				openList.empty();
+				break;
+			}
+			vector<Pos> adjPositions = curPos.getAllAdj();
+			Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
+			// Arrange the order of traversing to make the result path as straight as possible
+			Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
+			for (SizeType i = 0; i < adjPositions.size(); ++i) {
+				if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+					util::swap(adjPositions[0], adjPositions[i]);
+					break;
+				}
+			}
+
+			// Traverse the adjacent positions
+			for (int j = 0; j < adjPositions.size(); j++) {
+				const Pos &adjPos = adjPositions.at(j);
+				Point &adjPoint = map->getPoint(adjPos);
+				if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
+					adjPoint.setParent(curPos);
+					adjPoint.setDist(curPoint.getDist() + 1);
+#pragma omp critical
+					openList.push(adjPos);
+				}
+				if (maxNumThreads < omp_get_num_threads()) {
+					maxNumThreads = omp_get_num_threads();
+				}
+			}
+		}
+		//Clock
+		endTime = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+		if (maxTimeBFS < elapsed_seconds.count()) {
+			maxTimeBFS = elapsed_seconds.count();
+		}
+	}
+
+	//Clock
+	/*endTime = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	totalTimeBFS = elapsed_seconds.count();*/
 }
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
@@ -292,87 +378,39 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 	map->getPoint(from).setDist(0);
 	queue<Pos> openList;
 	openList.push(from);
-	
+
 	// BFS
 	while (!openList.empty()) {
-		//FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
-		if (threaded) {	
-			int queueSize = openList.size();
-#pragma omp parallel for
-			for (int i = 0; i < queueSize; i++) {
-				Pos curPos;
-#pragma omp critical
-				{
-					curPos = openList.front();
-					openList.pop();
-				}
-				const Point &curPoint = map->getPoint(curPos);
-				map->showTestPos(curPos);
-				if (curPos == to) {
-					buildPath(from, to, path);
-#pragma omp critical
-					openList.empty();
-				}
-				vector<Pos> adjPositions = curPos.getAllAdj();
-				Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-				// Arrange the order of traversing to make the result path as straight as possible
-				Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
-				for (SizeType i = 0; i < adjPositions.size(); ++i) {
-					if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
-						util::swap(adjPositions[0], adjPositions[i]);
-						break;
-					}
-				}
-
-				// Traverse the adjacent positions
-				for (int j = 0; j < adjPositions.size(); j++) {
-					const Pos &adjPos = adjPositions.at(j);
-					Point &adjPoint = map->getPoint(adjPos);
-					if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
-						adjPoint.setParent(curPos);
-						adjPoint.setDist(curPoint.getDist() + 1);
-#pragma omp critical
-						openList.push(adjPos);
-					}
-					if (maxNumThreads < omp_get_num_threads()) {
-						maxNumThreads = omp_get_num_threads();
-					}
-				}
-			}
-
+		Pos curPos = openList.front();
+		const Point &curPoint = map->getPoint(curPos);
+		openList.pop();
+		map->showTestPos(curPos);
+		if (curPos == to) {
+			buildPath(from, to, path);
+			break;
 		}
-		else {
-			Pos curPos = openList.front();
-			const Point &curPoint = map->getPoint(curPos);
-			openList.pop();
-			map->showTestPos(curPos);
-			if (curPos == to) {
-				buildPath(from, to, path);
+		vector<Pos> adjPositions = curPos.getAllAdj();
+		Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
+		// Arrange the order of traversing to make the result path as straight as possible
+		Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
+		for (SizeType i = 0; i < adjPositions.size(); ++i) {
+			if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+				util::swap(adjPositions[0], adjPositions[i]);
 				break;
 			}
-			vector<Pos> adjPositions = curPos.getAllAdj();
-			Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-			// Arrange the order of traversing to make the result path as straight as possible
-			Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
-			for (SizeType i = 0; i < adjPositions.size(); ++i) {
-				if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
-					util::swap(adjPositions[0], adjPositions[i]);
-					break;
-				}
+		}
+
+		// Traverse the adjacent positions
+
+		for (const Pos &adjPos : adjPositions) {
+			Point &adjPoint = map->getPoint(adjPos);
+			if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
+				adjPoint.setParent(curPos);
+				adjPoint.setDist(curPoint.getDist() + 1);
+				openList.push(adjPos);
 			}
-
-			// Traverse the adjacent positions
-
-			for (const Pos &adjPos : adjPositions) {
-				Point &adjPoint = map->getPoint(adjPos);
-				if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
-					adjPoint.setParent(curPos);
-					adjPoint.setDist(curPoint.getDist() + 1);
-					openList.push(adjPos);
-				}
-				if (maxNumThreads < omp_get_num_threads()) {
-					maxNumThreads = omp_get_num_threads();
-				}
+			if (maxNumThreads < omp_get_num_threads()) {
+				maxNumThreads = omp_get_num_threads();
 			}
 		}
 
@@ -383,9 +421,11 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
-	endTime = std::chrono::system_clock::now();
+
+	//Clock
+	/*endTime = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	totalTimeBFS = elapsed_seconds.count();
+	totalTimeBFS = elapsed_seconds.count();*/
 }
 
 void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {

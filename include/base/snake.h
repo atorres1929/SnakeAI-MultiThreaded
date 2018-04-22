@@ -94,6 +94,17 @@ private:
     */
     void findMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
 
+
+	/*
+	Find the shortest path AS STRAIGHT AS POSSIBLE between two positions.
+	This implementation was threaded to increase performance
+
+	@param from The starting position
+	@param to   The ending position
+	@param path The result will be stored in this field
+	*/
+	void findMinPathThreaded(const Pos &from, const Pos &to, std::list<Direction> &path);
+
     /*
     Find the longest path between two positions.
 
