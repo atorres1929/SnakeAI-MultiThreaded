@@ -84,7 +84,6 @@ void GameCtrl::setMapCol(const SizeType n) {
 int GameCtrl::run() {
     try {
         init();
-		beginTime = std::chrono::system_clock::now();
         if (runTest) {
             test();
         } else {
@@ -128,17 +127,18 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
-	endTime = endTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
-	
+
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
 	if (snake.isThreaded()) {
 		cout << "Threaded" << endl;
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
 	}
 	else {
-		cout << "Elapsed Time Finding Adjacent Paths: " << snake.getTotalTimeAdj() << "ns" << endl;
+		cout << "Sequential" << endl;
 	}
-	cout << "Elapsed Time: " << elapsed_seconds.count() << "ms" << endl;
+	cout << "Elapsed Time for BFS: " << snake.getTotalTimeBFS() << "s" << endl;
+	cout << "Longest Time for single BFS: " << snake.getMaxTimeBFS() << "s" << endl;
+	cout << "Elapsed Time: " << elapsed_seconds.count() << "s" << endl;
+	cout << "Max Threads: " << snake.getMaxNumThreads() << endl;
 	cout << endl;
 }
 
@@ -401,6 +401,42 @@ void GameCtrl::test() {
 	testThreadedPathSearch();
 }
 
+
+void GameCtrl::testSequentialPathSearch() {
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
+	}
+	snake = Snake();
+	map->createFood(Pos(18, 18));
+	snake.setMap(map);
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	beginTime = std::chrono::system_clock::now();
+	snake.testPathSearch();
+	endTime = std::chrono::system_clock::now();
+	exitGame("testSequentialPathSearch() finished.");
+}
+
+void GameCtrl::testThreadedPathSearch() {
+	beginTime = std::chrono::system_clock::now();
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testThreadedPathSearch() requires map size 10x10");
+	}
+	snake = Snake();
+	map->createFood(Pos(18, 18));
+	snake.setMap(map);
+	snake.enableThreaded();
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	beginTime = std::chrono::system_clock::now();
+	snake.testPathSearch();
+	endTime = std::chrono::system_clock::now();
+	exitGame("testThreadedPathSearch() finished.");
+}
+
+
 void GameCtrl::testFood() {
     SizeType cnt = 0;
     while (runMainThread && cnt++ < map->getSize()) {
@@ -458,31 +494,4 @@ void GameCtrl::testHamilton() {
     snake.addBody(Pos(1, 1));
     snake.testHamilton();
     exitGame("testHamilton() finished.");
-}
-
-void GameCtrl::testSequentialPathSearch() {
-	if (mapRowCnt < 10 || mapColCnt < 10) {
-		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
-	}
-	map->createFood(Pos(8, 8));
-	snake.setMap(map);
-	snake.addBody(Pos(1, 3));
-	snake.addBody(Pos(1, 2));
-	snake.addBody(Pos(1, 1));
-	snake.testSequential();
-	exitGame("testSequentialPathSearch() finished.");
-}
-
-void GameCtrl::testThreadedPathSearch() {
-	if (mapRowCnt < 10 || mapColCnt < 10) {
-		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
-	}
-	map->createFood(Pos(8, 8));
-	snake.setMap(map);
-	snake.enableThreaded();
-	snake.addBody(Pos(1, 3));
-	snake.addBody(Pos(1, 2));
-	snake.addBody(Pos(1, 1));
-	snake.testSequential();
-	exitGame("testThreadedPathSearch() finished.");
 }
