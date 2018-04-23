@@ -67,8 +67,6 @@ void Snake::testHamilton() {
 }
 
 void Snake::testPathSearch() {
-	maxTimeBFS = 0;
-	maxTimeGraphSearch = 0;
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
@@ -212,9 +210,13 @@ void Snake::decideNext() {
 		tmpSnake.setMap(&tmpMap);
 		// Step 1
 		tmpSnake.findMinPathToFood(pathToFood);
+		totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
+		maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
 		if (!pathToFood.empty()) {
 			// Step 2
 			tmpSnake.move(pathToFood);
+			totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
+			maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
 			if (tmpMap.isAllBody()) {
 				this->setDirection(*(pathToFood.begin()));
 				return;
@@ -222,6 +224,8 @@ void Snake::decideNext() {
 			else {
 				// Step 3
 				tmpSnake.findMaxPathToTail(pathToTail);
+				totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
+				maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
 				if (pathToTail.size() > 1) {
 					this->setDirection(*(pathToFood.begin()));
 					return;
@@ -541,10 +545,6 @@ void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
 }
 
 void Snake::findMaxPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
-	//Clock
-	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
-	std::chrono::system_clock::time_point endTime;
-
 	// Get the shortest path
 	bool oriEnabled = map->isTestEnabled();
 	map->setTestEnabled(false);
@@ -552,8 +552,8 @@ void Snake::findMaxPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 	map->setTestEnabled(oriEnabled);
 	// Init
 	SizeType row = map->getRowCount(), col = map->getColCount();
-	for (int i = 1; i < row - 1; ++i) {
-		for (int j = 1; j < col - 1; ++j) {
+	for (SizeType i = 1; i < row - 1; ++i) {
+		for (SizeType j = 1; j < col - 1; ++j) {
 			map->getPoint(Pos(i, j)).setVisit(false);
 		}
 	}
@@ -645,13 +645,6 @@ void Snake::findMaxPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 			cur = next;
 		}
 	}
-	//Clock
-	endTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	if (maxTimeGraphSearch < elapsed_seconds.count()) {
-		maxTimeGraphSearch = elapsed_seconds.count();
-	}
-
 	if (maxNumThreadsGraphSearch < omp_get_num_threads()) {
 		maxNumThreadsGraphSearch = omp_get_num_threads();
 	}

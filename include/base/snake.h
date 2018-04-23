@@ -52,20 +52,7 @@ public:
 	Get the total amount of time to complete the BFS
 	*/
 	double getTotalTimeBFS();
-	
-	/*
-	Get the total amount of time to complete the Graph Search
-	*/
-	double getTotalTimeGraphSearch();
 
-	/*
-	Get the time that the longest Graph Search took
-	*/
-	double getMaxTimeGraphSearch();
-
-	/*
-	Is the algorithm threaded
-	*/
 	bool isThreaded();
 
     /*
@@ -78,8 +65,7 @@ public:
     void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testHamilton();
 	void testPathSearch();
-	int getMaxNumThreadsBFS();
-	int getMaxNumThreadsGraphSearch();
+	int getMaxNumThreads();
 
 private:
     void removeTail();
@@ -128,16 +114,6 @@ private:
     */
     void findMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
 
-	/*
-	Find the longest path between two positions.
-	This implementation was threaded to increase performance
-
-	@param from The starting position
-	@param to   The ending position
-	@param path The result will be stored in this field
-	*/
-	void findMaxPathThreaded(const Pos &from, const Pos &to, std::list<Direction> &path);
-
     /*
     Build a path between two positions.
 
@@ -162,10 +138,7 @@ private:
 	bool threaded = false;
 	double maxTimeBFS = 0;
 	double totalTimeBFS = 0;
-	double totalTimeGraphSearch = 0;
-	double maxTimeGraphSearch = 0;
-	int maxNumThreadsBFS = 0;
-	int maxNumThreadsGraphSearch = 0;
+	int maxNumThreads = 0;
 };
 
 #endif

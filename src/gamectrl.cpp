@@ -157,12 +157,6 @@ void GameCtrl::exitGame(const std::string &msg) {
 		Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
 		cout << "Max Threads: " << snake.getMaxNumThreadsGraphSearch() << endl;
 	}
-
-	if (visibleGUI && runTest) {
-		cout << "Enter any character to proceed to next test" << endl;
-		char g;
-		cin >> g;
-	}
 	cout << endl;
 }
 
@@ -426,8 +420,8 @@ void GameCtrl::test() {
     //testFood();
     //testSearch();
     //testHamilton();
-	testSequentialPathSearch();
 	testThreadedPathSearch();
+	testSequentialPathSearch();
 }
 
 
@@ -442,6 +436,7 @@ void GameCtrl::testSequentialPathSearch() {
 		map->createFood(Pos(8, 8));
 	}
 	snake = Snake();
+	snake.setTesting(true);
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
@@ -465,6 +460,7 @@ void GameCtrl::testThreadedPathSearch() {
 		map->createFood(Pos(8, 8));
 	}
 	snake = Snake();
+	snake.setTesting(true);
 	snake.setMap(map);
 	snake.enableThreaded();
 	snake.addBody(Pos(1, 3));
