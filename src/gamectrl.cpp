@@ -438,6 +438,15 @@ void GameCtrl::testSequentialPathSearch() {
 	else if (mapRowCnt == 10 && mapColCnt == 10) {
 		map->createFood(Pos(8, 8));
 	}
+	else if (mapRowCnt == 100 && mapColCnt == 100) {
+		map->createFood(Pos(98, 98));
+	}
+	else if (mapRowCnt == 50 && mapColCnt == 50) {
+		map->createFood(Pos(48, 48));
+	}
+	else if (mapRowCnt == 30 && mapColCnt == 30) {
+		map->createFood(Pos(28, 28));
+	}
 	snake = Snake();
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
@@ -460,6 +469,15 @@ void GameCtrl::testThreadedPathSearch() {
 	}
 	else if (mapRowCnt == 10 && mapColCnt == 10) {
 		map->createFood(Pos(8, 8));
+	}
+	else if (mapRowCnt == 100 && mapColCnt == 100) {
+		map->createFood(Pos(98, 98));
+	}
+	else if (mapRowCnt == 50 && mapColCnt == 50) {
+		map->createFood(Pos(48, 48));
+	}
+	else if (mapRowCnt == 30 && mapColCnt == 30) {
+		map->createFood(Pos(28, 28));
 	}
 	snake = Snake();
 	snake.setMap(map);
