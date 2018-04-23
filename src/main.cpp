@@ -27,7 +27,7 @@ int main() {
 	// Set whether the snake will be displayed
 	game->setVisibleGUI(true);
 
-	game->setThreaded(true);
+	game->setThreaded(false);
 
 	game->setUnlockMovement(true);
 
