@@ -436,7 +436,6 @@ void GameCtrl::testSequentialPathSearch() {
 		map->createFood(Pos(8, 8));
 	}
 	snake = Snake();
-	snake.setTesting(true);
 	snake.setMap(map);
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
@@ -460,7 +459,6 @@ void GameCtrl::testThreadedPathSearch() {
 		map->createFood(Pos(8, 8));
 	}
 	snake = Snake();
-	snake.setTesting(true);
 	snake.setMap(map);
 	snake.enableThreaded();
 	snake.addBody(Pos(1, 3));
