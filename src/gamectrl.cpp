@@ -132,31 +132,33 @@ void GameCtrl::exitGame(const std::string &msg) {
     runMainThread = false;
 
 	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-	if (snake.isThreaded()) {
-		cout << "Threaded" << endl;
+	if (runTest) {
+		if (snake.isThreaded()) {
+			cout << "Threaded" << endl;
+		}
+		else {
+			cout << "Sequential" << endl;
+		}
+		if (enableHamilton) {
+			cout << "Elapsed Time for BFS: ";
+			Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+			cout << "Biggest Time for BFS: ";
+			Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+			cout << "Elapsed Time for AI:  ";
+			Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+			cout << "Max Threads: " << snake.getMaxNumThreadsBFS() << endl;
+		}
+		else {
+			cout << "Elapsed Time for Graph Search: ";
+			Console::writeWithColor(std::to_string(snake.getTotalTimeGraphSearch()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+			cout << "Biggest Time for Graph Search: ";
+			Console::writeWithColor(std::to_string(snake.getMaxTimeGraphSearch()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+			cout << "Elapsed Time for AI:  ";
+			Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+			cout << "Max Threads: " << snake.getMaxNumThreadsGraphSearch() << endl;
+		}
+		cout << endl;
 	}
-	else {
-		cout << "Sequential" << endl;
-	}
-	if (enableHamilton) {
-		cout << "Elapsed Time for BFS: ";
-		Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
-		cout << "Biggest Time for BFS: ";
-		Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
-		cout << "Elapsed Time for AI:  ";
-		Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
-		cout << "Max Threads: " << snake.getMaxNumThreadsBFS() << endl;
-	}
-	else {
-		cout << "Elapsed Time for Graph Search: ";
-		Console::writeWithColor(std::to_string(snake.getTotalTimeGraphSearch()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
-		cout << "Biggest Time for Graph Search: ";
-		Console::writeWithColor(std::to_string(snake.getMaxTimeGraphSearch()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
-		cout << "Elapsed Time for AI:  ";
-		Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
-		cout << "Max Threads: " << snake.getMaxNumThreadsGraphSearch() << endl;
-	}
-	cout << endl;
 }
 
 void GameCtrl::exitGameErr(const std::string &err) {
