@@ -96,7 +96,6 @@ int GameCtrl::run() {
 		bool finished = true;
 		while (finished) {
 			char g;
-			cout << "Process complete." << endl;
 			cout << "Enter R to Restart || Enter E to Exit";
 			cin >> g;
 			if (g == 'R' || g == 'r') {
@@ -420,8 +419,10 @@ void GameCtrl::test() {
     //testFood();
     //testSearch();
     //testHamilton();
-	testThreadedPathSearch();
 	testSequentialPathSearch();
+	testSequentialPathSearch();
+	testThreadedPathSearch();
+	testThreadedPathSearch();
 }
 
 

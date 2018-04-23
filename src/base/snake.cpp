@@ -211,12 +211,13 @@ void Snake::decideNext() {
 		tmpSnake.findMinPathToFood(pathToFood);
 		totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
 		maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
-
+		maxNumThreadsGraphSearch = tmpSnake.getMaxNumThreadsGraphSearch();
 		if (!pathToFood.empty()) {
 			// Step 2
 			tmpSnake.move(pathToFood);
 			totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
 			maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
+			maxNumThreadsGraphSearch = tmpSnake.getMaxNumThreadsGraphSearch();
 			if (tmpMap.isAllBody()) {
 				this->setDirection(*(pathToFood.begin()));
 				return;
@@ -226,6 +227,7 @@ void Snake::decideNext() {
 				tmpSnake.findMaxPathToTail(pathToTail);
 				totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
 				maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
+				maxNumThreadsGraphSearch = tmpSnake.getMaxNumThreadsGraphSearch();
 				if (pathToTail.size() > 1) {
 					this->setDirection(*(pathToFood.begin()));
 					return;
