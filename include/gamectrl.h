@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 
+
 class GameCtrl {
 public:
     typedef Map::SizeType SizeType;
@@ -15,6 +16,9 @@ public:
 
     static GameCtrl* getInstance();
 
+	void setThreaded(const bool threaded);
+	void setVisibleGUI(const bool visible);
+	void setUnlockMovement(const bool unlockMovement_);
     void setFPS(const double fps_);
     void setEnableAI(const bool enableAI_);
     void setEnableHamilton(const bool enableHamilton_);
@@ -49,6 +53,8 @@ private:
     void testFood();
     void testSearch();
     void testHamilton();
+	void testSequentialPathSearch();
+	void testThreadedPathSearch();
 
     void startSubThreads();
 
@@ -66,6 +72,12 @@ private:
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
 
+	std::chrono::system_clock::time_point beginTime;
+	std::chrono::system_clock::time_point endTime;
+
+	bool isThreaded = false;
+	bool visibleGUI = false;
+	bool unlockMovement = false;
     double fps = 60.0;
     bool enableAI = true;
     bool enableHamilton = true;

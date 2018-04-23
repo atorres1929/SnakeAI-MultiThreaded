@@ -2,7 +2,9 @@
 #include "util/util.h"
 #include <stdexcept>
 #include <cstdio>
+#include <iostream>
 #include <chrono>
+#include <ctime>
 #include <cstdlib>
 
 #ifdef OS_WIN
@@ -11,6 +13,9 @@
 
 using std::string;
 using std::list;
+using std::cout;
+using std::cin;
+using std::endl;
 
 const string GameCtrl::MSG_BAD_ALLOC = "Not enough memory to run the game.";
 const string GameCtrl::MSG_LOSE = "Oops! You lose!";
@@ -36,8 +41,20 @@ GameCtrl* GameCtrl::getInstance() {
     return &instance;
 }
 
+void GameCtrl::setThreaded(const bool threaded) {
+	isThreaded = threaded;
+}
+
+void GameCtrl::setVisibleGUI(const bool visible) {
+	visibleGUI = visible;
+}
+
 void GameCtrl::setFPS(const double fps_) {
     fps = fps_;
+}
+
+void GameCtrl::setUnlockMovement(const bool unlockMovement_) {
+	unlockMovement = unlockMovement_;
 }
 
 void GameCtrl::setEnableAI(const bool enableAI_) {
@@ -76,7 +93,21 @@ int GameCtrl::run() {
         } else {
             mainLoop();
         }
-        return 0;
+		bool finished = true;
+		while (finished) {
+			char g;
+			cout << "Enter R to Restart || Enter E to Exit";
+			cin >> g;
+			if (g == 'R' || g == 'r') {
+				finished = false;
+				cout << endl << endl;
+				cout << "==================================================" << endl;
+				GameCtrl::run();
+			}
+			else {
+				return 0;
+			}
+		}
     } catch (const std::exception &e) {
         exitGameErr(e.what());
         return -1;
@@ -84,7 +115,9 @@ int GameCtrl::run() {
 }
 
 void GameCtrl::sleepFPS() const {
-    util::sleep((long)((1.0 / fps) * 1000));
+	if (visibleGUI) {
+		util::sleep((long)((1.0 / fps) * 1000));
+	}
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
@@ -97,6 +130,35 @@ void GameCtrl::exitGame(const std::string &msg) {
     }
     mutexExit.unlock();
     runMainThread = false;
+
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	if (runTest) {
+		if (snake.isThreaded()) {
+			cout << "Threaded" << endl;
+		}
+		else {
+			cout << "Sequential" << endl;
+		}
+		if (enableHamilton) {
+			cout << "Elapsed Time for BFS: ";
+			Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+			cout << "Biggest Time for BFS: ";
+			Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+			cout << "Elapsed Time for AI:  ";
+			Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+			cout << "Max Threads: " << snake.getMaxNumThreadsBFS() << endl;
+		}
+		else {
+			cout << "Elapsed Time for Graph Search: ";
+			Console::writeWithColor(std::to_string(snake.getTotalTimeGraphSearch()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+			cout << "Biggest Time for Graph Search: ";
+			Console::writeWithColor(std::to_string(snake.getMaxTimeGraphSearch()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+			cout << "Elapsed Time for AI:  ";
+			Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+			cout << "Max Threads: " << snake.getMaxNumThreadsGraphSearch() << endl;
+		}
+		cout << endl;
+	}
 }
 
 void GameCtrl::exitGameErr(const std::string &err) {
@@ -104,8 +166,10 @@ void GameCtrl::exitGameErr(const std::string &err) {
 }
 
 void GameCtrl::printMsg(const std::string &msg) {
-    Console::setCursor(0, (int)mapRowCnt);
-    Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+	if (visibleGUI && !runTest) {
+		Console::setCursor(0, (int)mapRowCnt);
+		Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+	}
 }
 
 void GameCtrl::mainLoop() {
@@ -122,7 +186,9 @@ void GameCtrl::mainLoop() {
                 moveSnake();
             }
         }
-        util::sleep(moveInterval);
+		if (!unlockMovement) {
+			util::sleep(moveInterval);
+		}
     }
 }
 
@@ -173,7 +239,9 @@ void GameCtrl::saveMapContent() const {
 }
 
 void GameCtrl::init() {
-    Console::clear();
+	if (visibleGUI) {
+		Console::clear();
+	}
     initMap();
     if (!runTest) {
         initSnake();
@@ -206,10 +274,15 @@ void GameCtrl::initSnake() {
     if (enableHamilton) {
         snake.enableHamilton();
     }
+	if (isThreaded) {
+		snake.enableThreaded();
+	}
 }
 
 void GameCtrl::initFiles() {
+#ifdef defined(OSWIN)
     errno_t error = fopen_s(&movementFile, MAP_INFO_FILENAME.c_str(), "w");
+#endif
     if (!movementFile) {
         throw std::runtime_error("GameCtrl.initFiles(): Fail to open file: " + MAP_INFO_FILENAME);
     } else {
@@ -223,8 +296,10 @@ void GameCtrl::initFiles() {
 
 void GameCtrl::startSubThreads() {
     runSubThread = true;
-    drawThread = std::thread(&GameCtrl::draw, this);
-    drawThread.detach();
+	if (visibleGUI) {
+		drawThread = std::thread(&GameCtrl::draw, this);
+		drawThread.detach();
+	}
     keyboardThread = std::thread(&GameCtrl::keyboard, this);
     keyboardThread.detach();
 }
@@ -344,9 +419,62 @@ void GameCtrl::keyboardMove(Snake &s, const Direction d) {
 
 void GameCtrl::test() {
     //testFood();
-    testSearch();
+    //testSearch();
     //testHamilton();
+	testSequentialPathSearch();
+	testSequentialPathSearch();
+	testThreadedPathSearch();
+	testThreadedPathSearch();
 }
+
+
+void GameCtrl::testSequentialPathSearch() {
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testSequentialPathSearch() requires map size 10x10");
+	}
+	if (mapRowCnt == 20 && mapColCnt == 20) {
+		map->createFood(Pos(18, 18));
+	}
+	else if (mapRowCnt == 10 && mapColCnt == 10) {
+		map->createFood(Pos(8, 8));
+	}
+	snake = Snake();
+	snake.setMap(map);
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	if (enableHamilton)
+		snake.enableHamilton();
+	beginTime = std::chrono::system_clock::now();
+	snake.testPathSearch();
+	endTime = std::chrono::system_clock::now();
+	exitGame("testSequentialPathSearch() finished.");
+}
+
+void GameCtrl::testThreadedPathSearch() {
+	if (mapRowCnt < 10 || mapColCnt < 10) {
+		throw std::range_error("GameCtrl.testThreadedPathSearch() requires map size 10x10");
+	}
+	if (mapRowCnt == 20 && mapColCnt == 20) {
+		map->createFood(Pos(18, 18));
+	}
+	else if (mapRowCnt == 10 && mapColCnt == 10) {
+		map->createFood(Pos(8, 8));
+	}
+	snake = Snake();
+	snake.setMap(map);
+	snake.enableThreaded();
+	snake.addBody(Pos(1, 3));
+	snake.addBody(Pos(1, 2));
+	snake.addBody(Pos(1, 1));
+	if (enableHamilton)
+		snake.enableHamilton();
+	beginTime = std::chrono::system_clock::now();
+	snake.testPathSearch();
+	endTime = std::chrono::system_clock::now();
+	exitGame("testThreadedPathSearch() finished.");
+}
+
 
 void GameCtrl::testFood() {
     SizeType cnt = 0;

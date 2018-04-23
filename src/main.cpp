@@ -18,11 +18,18 @@ int main() {
 
     // Set whether to record the snake's movements to file. Default is true.
     // The movements will be written to a file named "movements.txt".
-    game->setRecordMovements(true);
+    game->setRecordMovements(false);
 
     // Set whether to run the test program. Default is false.
     // You can select different testing methods by modifying GameCtrl::test().
-    game->setRunTest(false);
+    game->setRunTest(true);
+
+	//Set whether the snake will be displayed
+	game->setVisibleGUI(false);
+
+	game->setThreaded(true);
+
+	game->setUnlockMovement(true);
 
     // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
     game->setMapRow(10);
