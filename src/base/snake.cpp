@@ -67,8 +67,8 @@ void Snake::testHamilton() {
 }
 
 void Snake::testPathSearch() {
-	enableHamilton();
 	maxTimeBFS = 0;
+	maxTimeGraphSearch = 0;
 	while (bodies.size() < 4) {
 		decideNext();
 		move();
@@ -87,8 +87,20 @@ double Snake::getTotalTimeBFS() {
 	return totalTimeBFS;
 }
 
-int Snake::getMaxNumThreads() {
-	return maxNumThreads;
+double Snake::getTotalTimeGraphSearch() {
+	return totalTimeGraphSearch;
+}
+
+double Snake::getMaxTimeGraphSearch() {
+	return maxTimeGraphSearch;
+}
+
+int Snake::getMaxNumThreadsBFS() {
+	return maxNumThreadsBFS;
+}
+
+int Snake::getMaxNumThreadsGraphSearch() {
+	return maxNumThreadsGraphSearch;
 }
 
 void Snake::addBody(const Pos &p) {
@@ -277,10 +289,25 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 		}
 		std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+		if (maxTimeBFS < elapsed_seconds.count()) {
+			maxTimeBFS = elapsed_seconds.count();
+		}
 		totalTimeBFS += elapsed_seconds.count();
 	}
 	else if (pathType == 1) {
-		findMaxPath(getHead(), goal, path);
+		std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+		if (threaded) {
+			findMaxPathThreaded(getHead(), goal, path);
+		}
+		else {
+			findMaxPath(getHead(), goal, path);
+		}
+		std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+		if (maxTimeGraphSearch < elapsed_seconds.count()) {
+			maxTimeGraphSearch = elapsed_seconds.count();
+		}
+		totalTimeGraphSearch += elapsed_seconds.count();
 	}
 	map->getPoint(goal).setType(oriType);  // Retore point type
 }
@@ -298,10 +325,6 @@ option for threading, as OpenMP doesn't offer the control and versatility that i
 
 //FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
 void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
-	//Clock
-	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
-	std::chrono::system_clock::time_point endTime;
-
 	// Init
 	SizeType row = map->getRowCount(), col = map->getColCount();
 	for (SizeType i = 1; i < row - 1; ++i) {
@@ -331,7 +354,6 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 			if (curPos == to) {
 				buildPath(from, to, path);
 				openList.empty();
-				break;
 			}
 			vector<Pos> adjPositions = curPos.getAllAdj();
 			Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
@@ -354,25 +376,15 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 #pragma omp critical
 					openList.push(adjPos);
 				}
-				if (maxNumThreads < omp_get_num_threads()) {
-					maxNumThreads = omp_get_num_threads();
+				if (maxNumThreadsBFS < omp_get_num_threads()) {
+					maxNumThreadsBFS = omp_get_num_threads();
 				}
 			}
-		}
-		//Clock
-		endTime = std::chrono::system_clock::now();
-		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-		if (maxTimeBFS < elapsed_seconds.count()) {
-			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
 }
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
-	//Clock
-	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
-	std::chrono::system_clock::time_point endTime;
-
 	// Init
 	SizeType row = map->getRowCount(), col = map->getColCount();
 	for (SizeType i = 1; i < row - 1; ++i) {
@@ -415,16 +427,9 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 				adjPoint.setDist(curPoint.getDist() + 1);
 				openList.push(adjPos);
 			}
-			if (maxNumThreads < omp_get_num_threads()) {
-				maxNumThreads = omp_get_num_threads();
+			if (maxNumThreadsBFS < omp_get_num_threads()) {
+				maxNumThreadsBFS = omp_get_num_threads();
 			}
-		}
-
-		//Clock
-		endTime = std::chrono::system_clock::now();
-		std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
-		if (maxTimeBFS < elapsed_seconds.count()) {
-			maxTimeBFS = elapsed_seconds.count();
 		}
 	}
 }
@@ -529,6 +534,126 @@ void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
 			++it;
 			cur = next;
 		}
+	}
+	if (maxNumThreadsGraphSearch < omp_get_num_threads()) {
+		maxNumThreadsGraphSearch = omp_get_num_threads();
+	}
+}
+
+void Snake::findMaxPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
+	//Clock
+	std::chrono::system_clock::time_point beginTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point endTime;
+
+	// Get the shortest path
+	bool oriEnabled = map->isTestEnabled();
+	map->setTestEnabled(false);
+	findMinPath(from, to, path);
+	map->setTestEnabled(oriEnabled);
+	// Init
+	SizeType row = map->getRowCount(), col = map->getColCount();
+	for (int i = 1; i < row - 1; ++i) {
+		for (int j = 1; j < col - 1; ++j) {
+			map->getPoint(Pos(i, j)).setVisit(false);
+		}
+	}
+	// Make all points on the path visited
+	Pos cur = from;
+	for (const Direction d : path) {
+		map->getPoint(cur).setVisit(true);
+		cur = cur.getAdj(d);
+	}
+	map->getPoint(cur).setVisit(true);
+	// Extend the path between each pair of the points
+	for (auto it = path.begin(); it != path.end();) {
+		if (it == path.begin()) {
+			cur = from;
+		}
+		bool extended = false;
+		Direction curDirec = *it;
+		Pos next = cur.getAdj(curDirec);
+		switch (curDirec) {
+		case LEFT:
+		case RIGHT: {
+			Pos curUp = cur.getAdj(UP);
+			Pos nextUp = next.getAdj(UP);
+			// Check two points above
+			if (map->isEmptyNotVisit(curUp) && map->isEmptyNotVisit(nextUp)) {
+				map->getPoint(curUp).setVisit(true);
+				map->getPoint(nextUp).setVisit(true);
+				it = path.erase(it);
+				it = path.insert(it, DOWN);
+				it = path.insert(it, curDirec);
+				it = path.insert(it, UP);
+				it = path.begin();
+				extended = true;
+			}
+			else {
+				Pos curDown = cur.getAdj(DOWN);
+				Pos nextDown = next.getAdj(DOWN);
+				// Check two points below
+				if (map->isEmptyNotVisit(curDown) && map->isEmptyNotVisit(nextDown)) {
+					map->getPoint(curDown).setVisit(true);
+					map->getPoint(nextDown).setVisit(true);
+					it = path.erase(it);
+					it = path.insert(it, UP);
+					it = path.insert(it, curDirec);
+					it = path.insert(it, DOWN);
+					it = path.begin();
+					extended = true;
+				}
+			}
+			break;
+		}
+		case UP:
+		case DOWN: {
+			Pos curLeft = cur.getAdj(LEFT);
+			Pos nextLeft = next.getAdj(LEFT);
+			// Check two points on the left
+			if (map->isEmptyNotVisit(curLeft) && map->isEmptyNotVisit(nextLeft)) {
+				map->getPoint(curLeft).setVisit(true);
+				map->getPoint(nextLeft).setVisit(true);
+				it = path.erase(it);
+				it = path.insert(it, RIGHT);
+				it = path.insert(it, curDirec);
+				it = path.insert(it, LEFT);
+				it = path.begin();
+				extended = true;
+			}
+			else {
+				Pos curRight = cur.getAdj(RIGHT);
+				Pos nextRight = next.getAdj(RIGHT);
+				// Check two points on the right
+				if (map->isEmptyNotVisit(curRight) && map->isEmptyNotVisit(nextRight)) {
+					map->getPoint(curRight).setVisit(true);
+					map->getPoint(nextRight).setVisit(true);
+					it = path.erase(it);
+					it = path.insert(it, LEFT);
+					it = path.insert(it, curDirec);
+					it = path.insert(it, RIGHT);
+					it = path.begin();
+					extended = true;
+				}
+			}
+			break;
+		}
+		default:
+			break;
+		}
+		if (!extended) {
+			++it;
+			cur = next;
+		}
+	}
+	//Clock
+	endTime = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = endTime - beginTime;
+	if (maxTimeGraphSearch < elapsed_seconds.count()) {
+		maxTimeGraphSearch = elapsed_seconds.count();
+	}
+
+	if (maxNumThreadsGraphSearch < omp_get_num_threads()) {
+		maxNumThreadsGraphSearch = omp_get_num_threads();
 	}
 }
 
