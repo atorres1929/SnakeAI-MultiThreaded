@@ -421,10 +421,10 @@ void GameCtrl::test() {
     //testFood();
     //testSearch();
     //testHamilton();
-	testSequentialPathSearch();
+	//testSequentialPathSearch();
 	//testSequentialPathSearch();
 	//testThreadedPathSearch();
-	//testThreadedPathSearch();
+	testThreadedPathSearch();
 }
 
 
