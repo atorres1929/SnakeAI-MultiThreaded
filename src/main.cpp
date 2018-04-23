@@ -24,7 +24,7 @@ int main() {
     // You can select different testing methods by modifying GameCtrl::test().
     game->setRunTest(true);
 
-	//Set whether the snake will be displayed
+	// Set whether the snake will be displayed
 	game->setVisibleGUI(false);
 
 	game->setThreaded(true);
