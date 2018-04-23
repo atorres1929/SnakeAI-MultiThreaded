@@ -25,7 +25,7 @@ int main() {
     game->setRunTest(true);
 
 	// Set whether the snake will be displayed
-	game->setVisibleGUI(false);
+	game->setVisibleGUI(true);
 
 	game->setThreaded(true);
 
