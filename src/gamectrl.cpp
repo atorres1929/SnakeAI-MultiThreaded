@@ -96,7 +96,6 @@ int GameCtrl::run() {
 		bool finished = true;
 		while (finished) {
 			char g;
-			cout << "Process complete." << endl;
 			cout << "Enter R to Restart || Enter E to Exit";
 			cin >> g;
 			if (g == 'R' || g == 'r') {
@@ -139,18 +138,23 @@ void GameCtrl::exitGame(const std::string &msg) {
 	else {
 		cout << "Sequential" << endl;
 	}
-	cout << "Elapsed Time for BFS: ";
-	Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
-	cout << "Biggest Time for BFS: ";
-	Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
-	cout << "Elapsed Time for AI:  ";
-	Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
-	cout << "Max Threads: " << snake.getMaxNumThreads() << endl;
-
-	if (visibleGUI && runTest) {
-		cout << "Enter any character to proceed to next test" << endl;
-		char g;
-		cin >> g;
+	if (enableHamilton) {
+		cout << "Elapsed Time for BFS: ";
+		Console::writeWithColor(std::to_string(snake.getTotalTimeBFS()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+		cout << "Biggest Time for BFS: ";
+		Console::writeWithColor(std::to_string(snake.getMaxTimeBFS()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+		cout << "Elapsed Time for AI:  ";
+		Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+		cout << "Max Threads: " << snake.getMaxNumThreadsBFS() << endl;
+	}
+	else {
+		cout << "Elapsed Time for Graph Search: ";
+		Console::writeWithColor(std::to_string(snake.getTotalTimeGraphSearch()) + "s\n", ConsoleColor(GREEN, BLACK, true, false));
+		cout << "Biggest Time for Graph Search: ";
+		Console::writeWithColor(std::to_string(snake.getMaxTimeGraphSearch()) + "s\n", ConsoleColor(CYAN, BLACK, true, false));
+		cout << "Elapsed Time for AI:  ";
+		Console::writeWithColor(std::to_string(elapsed_seconds.count()) + "s\n", ConsoleColor(YELLOW, BLACK, true, false));
+		cout << "Max Threads: " << snake.getMaxNumThreadsGraphSearch() << endl;
 	}
 	cout << endl;
 }
@@ -416,6 +420,8 @@ void GameCtrl::test() {
     //testSearch();
     //testHamilton();
 	testSequentialPathSearch();
+	testSequentialPathSearch();
+	testThreadedPathSearch();
 	testThreadedPathSearch();
 }
 
@@ -435,6 +441,8 @@ void GameCtrl::testSequentialPathSearch() {
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
 	snake.addBody(Pos(1, 1));
+	if (enableHamilton)
+		snake.enableHamilton();
 	beginTime = std::chrono::system_clock::now();
 	snake.testPathSearch();
 	endTime = std::chrono::system_clock::now();
@@ -442,7 +450,6 @@ void GameCtrl::testSequentialPathSearch() {
 }
 
 void GameCtrl::testThreadedPathSearch() {
-	beginTime = std::chrono::system_clock::now();
 	if (mapRowCnt < 10 || mapColCnt < 10) {
 		throw std::range_error("GameCtrl.testThreadedPathSearch() requires map size 10x10");
 	}
@@ -458,6 +465,8 @@ void GameCtrl::testThreadedPathSearch() {
 	snake.addBody(Pos(1, 3));
 	snake.addBody(Pos(1, 2));
 	snake.addBody(Pos(1, 1));
+	if (enableHamilton)
+		snake.enableHamilton();
 	beginTime = std::chrono::system_clock::now();
 	snake.testPathSearch();
 	endTime = std::chrono::system_clock::now();
