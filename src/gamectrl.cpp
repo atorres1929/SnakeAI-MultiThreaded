@@ -422,9 +422,9 @@ void GameCtrl::test() {
     //testSearch();
     //testHamilton();
 	testSequentialPathSearch();
-	testSequentialPathSearch();
-	testThreadedPathSearch();
-	testThreadedPathSearch();
+	//testSequentialPathSearch();
+	//testThreadedPathSearch();
+	//testThreadedPathSearch();
 }
 
 
