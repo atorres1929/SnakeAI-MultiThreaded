@@ -321,17 +321,6 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 	map->getPoint(goal).setType(oriType);  // Retore point type
 }
 
-/*
-TODO
-
-Latest discovery suggests that OpenMP, which seems to rely on how many cores there are rather
-than true Multithreading, isn't the best option. I should look for pThreading or something other
-option for threading, as OpenMP doesn't offer the control and versatility that is needed.
-
-
-*/
-
-
 //FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
 void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
 	// Init
@@ -343,6 +332,8 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 	}
 	path.clear();
 	map->getPoint(from).setDist(0);
+
+	//Push first element to queue
 	queue<Pos> openList;
 	openList.push(from);
 
@@ -350,10 +341,11 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 	// BFS
 	while (!openList.empty()) {
 		int queueSize = openList.size();
-#pragma omp parallel for
+		//Make every iteration of the for loop a separate thread
+#pragma omp parallel for //Will happen every iteration of the while loop
 		for (int i = 0; i < queueSize; i++) {
 			Pos curPos;
-#pragma omp critical
+#pragma omp critical //Restrict access to queue to 1 thread at a time
 			{
 				curPos = openList.front();
 				openList.pop();
@@ -376,13 +368,20 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 			}
 
 			// Traverse the adjacent positions
+			/*
+			This was not parallelized due to the fact that there
+			was not much work being done in the for loop. Even in the 
+			max case (3), there would be no benefit. In fact, I suspect there
+			would be a detriment. Starting each thread, and waiting for them all
+			to finish would be slower than simply doing it sequentially.
+			*/
 			for (int j = 0; j < adjPositions.size(); j++) {
 				const Pos &adjPos = adjPositions.at(j);
 				Point &adjPoint = map->getPoint(adjPos);
 				if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_VALUE) {
 					adjPoint.setParent(curPos);
 					adjPoint.setDist(curPoint.getDist() + 1);
-#pragma omp critical
+#pragma omp critical //Restrict access to queue to 1 thread at a time
 					openList.push(adjPos);
 				}
 				if (maxNumThreadsBFS < omp_get_num_threads()) {
