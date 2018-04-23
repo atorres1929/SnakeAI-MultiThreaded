@@ -160,6 +160,7 @@ private:
     bool dead = false;
     bool hamiltonEnabled = false;
 	bool threaded = false;
+	bool endTest = false;
 	double maxTimeBFS = 0;
 	double totalTimeBFS = 0;
 	double totalTimeGraphSearch = 0;

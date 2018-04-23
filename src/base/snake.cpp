@@ -67,7 +67,7 @@ void Snake::testHamilton() {
 }
 
 void Snake::testPathSearch() {
-	while (bodies.size() < 4) {
+	while (bodies.size() < 4 && !endTest) {
 		decideNext();
 		move();
 	}
@@ -202,7 +202,6 @@ void Snake::decideNext() {
 
 	}
 	else {  // AI based on graph search
-
 		list<Direction> pathToFood, pathToTail;
 		// Create a virtual snake
 		Map tmpMap = *map;
@@ -212,6 +211,7 @@ void Snake::decideNext() {
 		tmpSnake.findMinPathToFood(pathToFood);
 		totalTimeGraphSearch = tmpSnake.getTotalTimeGraphSearch();
 		maxTimeGraphSearch = tmpSnake.getMaxTimeGraphSearch();
+
 		if (!pathToFood.empty()) {
 			// Step 2
 			tmpSnake.move(pathToFood);
@@ -232,6 +232,10 @@ void Snake::decideNext() {
 				}
 			}
 		}
+
+		if (tmpSnake.bodies.size() == 4)
+			endTest = true;
+
 		// Step 4
 		this->findMaxPathToTail(pathToTail);
 		if (pathToTail.size() > 1) {
@@ -252,7 +256,6 @@ void Snake::decideNext() {
 				}
 			}
 		}
-
 	}
 }
 
