@@ -22,7 +22,7 @@ int main() {
 
     // Set whether to run the test program. Default is false.
     // You can select different testing methods by modifying GameCtrl::test().
-    game->setRunTest(false);
+    game->setRunTest(true);
 
 	// Set whether the snake will be displayed
 	game->setVisibleGUI(true);
