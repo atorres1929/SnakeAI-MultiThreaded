@@ -320,8 +320,12 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 	}
 	map->getPoint(goal).setType(oriType);  // Retore point type
 }
-
-//FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
+/********************************************************************************************************************
+FOR THE PROFESSOR: THE FOLLOWING IS THE THREADED IMPLEMENTATION OF THE BFS
+Basically the only code I ended up adding was the OpenMP stuff.
+A lot of testing was done before this, as can be seen by the commits on our github, but in the end, the solution
+ended up being fairly simple.
+*********************************************************************************************************************/
 void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> &path) {
 	// Init
 	SizeType row = map->getRowCount(), col = map->getColCount();
