@@ -371,7 +371,7 @@ void Snake::findMinPathThreaded(const Pos &from, const Pos &to, list<Direction> 
 			/*
 			This was not parallelized due to the fact that there
 			was not much work being done in the for loop. Even in the 
-			max case (3), there would be no benefit. In fact, I suspect there
+			max case (4), there would be no benefit. In fact, I suspect there
 			would be a detriment. Starting each thread, and waiting for them all
 			to finish would be slower than simply doing it sequentially.
 			*/
